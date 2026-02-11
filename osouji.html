@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>おそうじログ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        background: #faf9f6;
+        color: #1a1a1a;
+        font-family: 'Zen Maru Gothic', sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px 80px;
+        overflow-x: hidden;
+    }
+
+    .title {
+        font-size: 14px;
+        font-weight: 400;
+        color: #bbb;
+        letter-spacing: 3px;
+        margin-bottom: 8px;
+    }
+
+    .streak {
+        font-size: 13px;
+        color: #999;
+        margin-bottom: 36px;
+        letter-spacing: 1px;
+    }
+    .streak strong {
+        color: #e8a87c;
+        font-size: 18px;
+    }
+
+    /* === でかいボタン === */
+    .button-area {
+        margin-bottom: 32px;
+        position: relative;
+    }
+
+    .clean-button {
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        border: none;
+        background: linear-gradient(145deg, #e8a87c, #d4845a);
+        color: white;
+        font-family: 'Zen Maru Gothic', sans-serif;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        cursor: pointer;
+        box-shadow: 
+            0 8px 32px rgba(232, 168, 124, 0.35),
+            0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+
+    .clean-button:active {
+        transform: scale(0.92);
+    }
+
+    .clean-button.popped {
+        animation: pop 0.4s ease;
+    }
+
+    @keyframes pop {
+        0% { transform: scale(1); }
+        30% { transform: scale(1.15); }
+        60% { transform: scale(0.95); }
+        100% { transform: scale(1); }
+    }
+
+    /* === 褒め言葉 === */
+    .praise-area {
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 32px;
+    }
+
+    .praise {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e8a87c;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.4s ease;
+        text-align: center;
+        line-height: 1.6;
+    }
+
+    .praise.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* === 統計カード === */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 36px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px 16px;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .stat-number {
+        font-size: 36px;
+        font-weight: 900;
+        color: #1a1a1a;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: #bbb;
+        letter-spacing: 2px;
+    }
+
+    .stat-card.today { border-top: 3px solid #e8a87c; }
+    .stat-card.week { border-top: 3px solid #c4b7a6; }
+    .stat-card.month { border-top: 3px solid #a8b5a0; }
+    .stat-card.year { border-top: 3px solid #8faabe; }
+
+    .stat-card.today .stat-number { color: #e8a87c; }
+
+    /* === グラフ === */
+    .chart-section {
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 36px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .chart-title {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: #ccc;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .chart-tabs {
+        display: flex;
+        gap: 4px;
+    }
+
+    .chart-tab {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        padding: 4px 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        background: none;
+        color: #aaa;
+        cursor: pointer;
+        letter-spacing: 1px;
+    }
+
+    .chart-tab.active {
+        background: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
+    }
+
+    .chart-container {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px 16px 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .chart-canvas {
+        width: 100%;
+        height: 160px;
+        position: relative;
+    }
+
+    .chart-bars {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        height: 120px;
+        padding: 0 4px;
+    }
+
+    .chart-bar-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .chart-bar {
+        width: 24px;
+        min-height: 2px;
+        background: linear-gradient(to top, #e8a87c, #f0c4a0);
+        border-radius: 4px 4px 0 0;
+        transition: height 0.5s ease;
+    }
+
+    .chart-bar.empty {
+        background: #f0efec;
+    }
+
+    .chart-bar-label {
+        font-family: 'DM Mono', monospace;
+        font-size: 9px;
+        color: #bbb;
+    }
+
+    .chart-bar-value {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        color: #999;
+        min-height: 14px;
+    }
+
+    /* === ログ === */
+    .log-section {
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 40px;
+    }
+
+    .log-title {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: #ccc;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .log-entry {
+        padding: 10px 0;
+        border-bottom: 1px solid #f5f5f5;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        opacity: 0;
+        transform: translateY(-8px);
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-time {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: #aaa;
+    }
+
+    .log-praise {
+        font-size: 13px;
+        color: #555;
+        text-align: right;
+        max-width: 65%;
+    }
+
+    .log-date-header {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: #bbb;
+        letter-spacing: 1px;
+        padding: 16px 0 6px;
+    }
+
+    .empty-log {
+        font-size: 14px;
+        color: #ddd;
+        text-align: center;
+        padding: 30px 0;
+        letter-spacing: 1px;
+    }
+
+    /* === パーティクル === */
+    .particle {
+        position: fixed;
+        pointer-events: none;
+        font-size: 20px;
+        z-index: 100;
+        animation: float-up 1.2s ease forwards;
+    }
+
+    @keyframes float-up {
+        0% { opacity: 1; transform: translateY(0) scale(1); }
+        100% { opacity: 0; transform: translateY(-120px) scale(0.5); }
+    }
+
+    @media (max-width: 360px) {
+        .stat-number { font-size: 28px; }
+        .clean-button { width: 160px; height: 160px; font-size: 20px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="title">おそうじログ</div>
+<div class="streak" id="streak">きょうからスタート！</div>
+
+<div class="button-area">
+    <button class="clean-button" id="cleanBtn" onclick="recordClean()">
+        そうじ<br>した！
+    </button>
+</div>
+
+<div class="praise-area">
+    <div class="praise" id="praise"></div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card today">
+        <div class="stat-number" id="statToday">0</div>
+        <div class="stat-label">きょう</div>
+    </div>
+    <div class="stat-card week">
+        <div class="stat-number" id="statWeek">0</div>
+        <div class="stat-label">こんしゅう</div>
+    </div>
+    <div class="stat-card month">
+        <div class="stat-number" id="statMonth">0</div>
+        <div class="stat-label">こんげつ</div>
+    </div>
+    <div class="stat-card year">
+        <div class="stat-number" id="statYear">0</div>
+        <div class="stat-label">ことし</div>
+    </div>
+</div>
+
+<div class="chart-section">
+    <div class="chart-header">
+        <div class="chart-title">推移</div>
+        <div class="chart-tabs">
+            <button class="chart-tab active" onclick="setChartMode('week')">7日</button>
+            <button class="chart-tab" onclick="setChartMode('month')">30日</button>
+        </div>
+    </div>
+    <div class="chart-container">
+        <div class="chart-canvas">
+            <div class="chart-bars" id="chartBars"></div>
+        </div>
+    </div>
+</div>
+
+<div class="log-section">
+    <div class="log-title">log</div>
+    <div id="logList">
+        <div class="empty-log">ボタンを押すと記録が降り積もります</div>
+    </div>
+</div>
+
+<script>
+    const praises = [
+        "えらい！ピカピカ✨", "さすが！気持ちいいね", "今日もやった！すごい",
+        "ホコリさん、さようなら👋", "お部屋が喜んでる", "モップマスター！",
+        "きれいは正義", "その調子！最高です", "やるなあ！",
+        "気持ちいい空気になった", "ナイスそうじ！", "ホコリゼロへ一歩前進",
+        "すばらしい習慣！", "お部屋ピカピカ計画、進行中", "掃除した自分、好きになれる",
+        "丁寧な暮らし、実践中", "空気が変わったの、わかる", "小さな積み重ね、大きな変化",
+        "今日もお部屋に愛を注いだ", "ホコリは見逃さない人", "レンタルモップの達人",
+        "1回1回が、暮らしを変える", "この一拭きに意味がある", "そうじは瞑想",
+        "また一つ、きれいを積んだ", "継続は力なり、を体現中",
+        "朝そうじ？夜そうじ？どっちもえらい", "モップが泣いて喜んでる",
+        "あなたの部屋、今日も呼吸してる", "これが丁寧に暮らすということ",
+    ];
+
+    let logs = [];
+    let lastPraiseIndex = -1;
+    let chartMode = 'week';
+
+    // === ストレージ ===
+    const STORAGE_KEY = 'osouji_logs';
+
+    function saveLogs() {
+        try {
+            const data = JSON.stringify(logs);
+            window.localStorage.setItem(STORAGE_KEY, data);
+        } catch(e) {
+            // localStorage unavailable, use memory only
+        }
+    }
+
+    function loadLogs() {
+        try {
+            const data = window.localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                logs = JSON.parse(data);
+            }
+        } catch(e) {
+            logs = [];
+        }
+    }
+
+    // === 日付ヘルパー ===
+    function getToday() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function getTime() {
+        const d = new Date();
+        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function parseDate(str) {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    }
+
+    function getWeekStart() {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(d.setDate(diff));
+        return `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
+    }
+
+    function getMonthStart() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
+    }
+
+    function getYearStart() {
+        return `${new Date().getFullYear()}-01-01`;
+    }
+
+    function getDaysAgo(n) {
+        const d = new Date();
+        d.setDate(d.getDate() - n);
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function getDayLabel(dateStr) {
+        const d = parseDate(dateStr);
+        const days = ['日','月','火','水','木','金','土'];
+        return `${d.getMonth()+1}/${d.getDate()}`;
+    }
+
+    function getShortLabel(dateStr) {
+        const d = parseDate(dateStr);
+        return `${d.getDate()}`;
+    }
+
+    // === 統計計算 ===
+    function countSince(sinceDate) {
+        return logs.filter(l => l.date >= sinceDate).length;
+    }
+
+    function countForDate(dateStr) {
+        return logs.filter(l => l.date === dateStr).length;
+    }
+
+    function updateStats() {
+        document.getElementById('statToday').textContent = countSince(getToday());
+        document.getElementById('statWeek').textContent = countSince(getWeekStart());
+        document.getElementById('statMonth').textContent = countSince(getMonthStart());
+        document.getElementById('statYear').textContent = countSince(getYearStart());
+    }
+
+    // === 連続日数 ===
+    function calcStreak() {
+        const uniqueDays = [...new Set(logs.map(l => l.date))].sort().reverse();
+        if (uniqueDays.length === 0) return 0;
+        
+        let streak = 0;
+        let checkDate = getToday();
+        
+        // 今日やってなければ昨日から数える
+        if (!uniqueDays.includes(checkDate)) {
+            checkDate = getDaysAgo(1);
+            if (!uniqueDays.includes(checkDate)) return 0;
+        }
+        
+        while (uniqueDays.includes(checkDate)) {
+            streak++;
+            const d = parseDate(checkDate);
+            d.setDate(d.getDate() - 1);
+            checkDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        
+        return streak;
+    }
+
+    function updateStreak() {
+        const streak = calcStreak();
+        const el = document.getElementById('streak');
+        if (streak === 0) {
+            el.innerHTML = 'きょうからスタート！';
+        } else if (streak === 1) {
+            el.innerHTML = 'きょうもえらい！';
+        } else {
+            el.innerHTML = `<strong>${streak}</strong> 日れんぞく！`;
+        }
+    }
+
+    // === グラフ ===
+    function setChartMode(mode) {
+        chartMode = mode;
+        document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        renderChart();
+    }
+
+    function renderChart() {
+        const container = document.getElementById('chartBars');
+        const days = chartMode === 'week' ? 7 : 30;
+        
+        let dates = [];
+        for (let i = days - 1; i >= 0; i--) {
+            dates.push(getDaysAgo(i));
+        }
+
+        const counts = dates.map(d => countForDate(d));
+        const maxCount = Math.max(...counts, 1);
+
+        let html = '';
+        dates.forEach((date, i) => {
+            const count = counts[i];
+            const height = count > 0 ? Math.max((count / maxCount) * 100, 8) : 4;
+            const isToday = date === getToday();
+            const label = chartMode === 'week' ? getDayLabel(date) : getShortLabel(date);
+            const showLabel = chartMode === 'week' || (i % 5 === 0) || i === dates.length - 1;
+            
+            html += `
+                <div class="chart-bar-group">
+                    <div class="chart-bar-value">${count > 0 ? count : ''}</div>
+                    <div class="chart-bar ${count === 0 ? 'empty' : ''}" 
+                         style="height: ${height}px; ${isToday ? 'background: linear-gradient(to top, #d4845a, #e8a87c);' : ''}">
+                    </div>
+                    <div class="chart-bar-label">${showLabel ? label : ''}</div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // === ランダム褒め言葉 ===
+    function getRandomPraise() {
+        let index;
+        do {
+            index = Math.floor(Math.random() * praises.length);
+        } while (index === lastPraiseIndex);
+        lastPraiseIndex = index;
+        return praises[index];
+    }
+
+    // === パーティクル ===
+    function spawnParticles() {
+        const emojis = ['✨', '🧹', '💫', '🌟', '🫧'];
+        const btn = document.getElementById('cleanBtn');
+        const rect = btn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        for (let i = 0; i < 5; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            p.style.left = (cx + (Math.random() - 0.5) * 120) + 'px';
+            p.style.top = (cy + (Math.random() - 0.5) * 60) + 'px';
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 1200);
+        }
+    }
+
+    // === メイン：記録する ===
+    function recordClean() {
+        const praise = getRandomPraise();
+        const time = getTime();
+        const today = getToday();
+
+        // ボタンアニメーション
+        const btn = document.getElementById('cleanBtn');
+        btn.classList.remove('popped');
+        void btn.offsetWidth;
+        btn.classList.add('popped');
+
+        // パーティクル
+        spawnParticles();
+
+        // 褒め言葉
+        const praiseEl = document.getElementById('praise');
+        praiseEl.classList.remove('show');
+        void praiseEl.offsetWidth;
+        praiseEl.textContent = praise;
+        praiseEl.classList.add('show');
+
+        // ログ追加
+        logs.unshift({ time, praise, date: today });
+        saveLogs();
+
+        // 全部更新
+        updateStats();
+        updateStreak();
+        renderChart();
+        renderLog();
+    }
+
+    // === ログ表示 ===
+    function renderLog() {
+        const logList = document.getElementById('logList');
+        
+        if (logs.length === 0) {
+            logList.innerHTML = '<div class="empty-log">ボタンを押すと記録が降り積もります</div>';
+            return;
+        }
+
+        // 最新20件だけ表示
+        const recent = logs.slice(0, 20);
+        let html = '';
+        let currentDate = '';
+
+        recent.forEach((log, i) => {
+            if (log.date !== currentDate) {
+                currentDate = log.date;
+                const label = log.date === getToday() ? 'きょう' : getDayLabel(log.date);
+                html += `<div class="log-date-header">${label}</div>`;
+            }
+            html += `
+                <div class="log-entry">
+                    <div class="log-time">${log.time}</div>
+                    <div class="log-praise">${log.praise}</div>
+                </div>
+            `;
+        });
+
+        if (logs.length > 20) {
+            html += `<div class="empty-log">ほか ${logs.length - 20} 件</div>`;
+        }
+
+        logList.innerHTML = html;
+    }
+
+    // === 初期化 ===
+    loadLogs();
+    updateStats();
+    updateStreak();
+    renderChart();
+    renderLog();
+</script>
+
+</body>
+</html>
