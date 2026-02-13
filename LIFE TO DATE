@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life to DATA</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --bg-warm: #f0ece4;
+    --paper: #faf8f4;
+    --ink: #1c1a17;
+    --ink-light: #3a3733;
+    --ink-faint: #6b6660;
+    --ink-ghost: #9e9891;
+    --ink-whisper: #c5c0b8;
+    --ink-breath: #ddd9d2;
+    --red: #c4392e;
+    --red-soft: #d4564c;
+    --red-glow: rgba(196,57,46,0.06);
+    --blue: #2b5f9e;
+    --blue-glow: rgba(43,95,158,0.06);
+    --dark: #1c1a17;
+    --dark-glow: rgba(28,26,23,0.04);
+    --green: #2d7a4e;
+    --green-glow: rgba(45,122,78,0.06);
+    --amber: #b8860b;
+    --violet: #7b5ea7;
+    --seed-color: #c5c0b8;
+    --sprout-color: #b8860b;
+    --bloom-color: #2d7a4e;
+    --new-color: #c4392e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 400;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ─── Hero / Cover ─── */
+  .cover {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(196,57,46,0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(43,95,158,0.03) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .cover-inner {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+  }
+
+  .cover-kicker {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.3s forwards;
+  }
+
+  .cover-title {
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 800;
+    font-size: clamp(2.2rem, 7vw, 3.6rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.5s forwards;
+  }
+
+  .cover-title em {
+    font-style: normal;
+    color: var(--red);
+  }
+
+  .cover-sub {
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 400;
+    font-size: clamp(0.85rem, 2.5vw, 1.05rem);
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    margin-top: 16px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.7s forwards;
+  }
+
+  .cover-growth {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 56px;
+    opacity: 0;
+    animation: fadeUp 1s ease 1s forwards;
+  }
+
+  .growth-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .growth-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+  }
+
+  .growth-step:hover .growth-dot { transform: scale(1.6); }
+
+  .growth-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--ink-ghost);
+    letter-spacing: 0.1em;
+  }
+
+  .growth-arrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--ink-breath);
+    margin-bottom: 16px;
+  }
+
+  .cover-scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fadeUp 1s ease 1.4s forwards;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 32px;
+    background: var(--ink-breath);
+    animation: scrollPulse 2s ease infinite;
+  }
+
+  .scroll-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    color: var(--ink-whisper);
+    text-transform: uppercase;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+
+  /* ─── Phase Sections ─── */
+  .toc-body {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+  }
+
+  .phase-section {
+    margin-bottom: 80px;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .phase-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ink-breath);
+  }
+
+  .phase-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .phase-name {
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+  }
+
+  .phase-1-color { color: var(--red); }
+  .phase-2-color { color: var(--blue); }
+  .phase-3-color { color: var(--dark); }
+  .phase-4-color { color: var(--green); }
+
+  /* ─── Entry Cards ─── */
+  .entry {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--ink-breath);
+    position: relative;
+    transition: padding-left 0.4s ease;
+    cursor: default;
+  }
+
+  .entry.is-linked {
+    cursor: pointer;
+  }
+
+  .entry.is-linked:hover {
+    padding-left: 12px;
+  }
+
+  .entry.is-linked:hover .entry-title {
+    color: var(--ink);
+  }
+
+  .entry-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .entry-id {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  .entry-status {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .entry-ctx {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--ink-ghost);
+    letter-spacing: 0.05em;
+  }
+
+  .entry-ctx .obj { color: var(--blue); }
+  .entry-ctx .mot { color: var(--red-soft); }
+
+  .entry-title {
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--ink-light);
+    transition: color 0.3s ease;
+    margin-bottom: 10px;
+    letter-spacing: 0.01em;
+  }
+
+  .entry-voice {
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 400;
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    line-height: 1.85;
+    padding-left: 16px;
+    border-left: 2px solid var(--ink-breath);
+    max-width: 520px;
+  }
+
+  .entry-origin {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--violet);
+    letter-spacing: 0.08em;
+    margin-top: 10px;
+  }
+
+  .entry-new-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--red);
+    background: var(--red-glow);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  /* ─── Photo Slot (future) ─── */
+  .entry-photo-slot {
+    display: none; /* hidden until photos are added */
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 3/2;
+    background: var(--bg-warm);
+    border: 1px solid var(--ink-breath);
+    margin-top: 12px;
+    overflow: hidden;
+  }
+
+  .entry-photo-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+  }
+
+  .has-photo .entry-photo-slot {
+    display: block;
+  }
+
+  /* ─── Colophon ─── */
+  .colophon {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .colophon-line {
+    width: 40px;
+    height: 1px;
+    background: var(--ink-breath);
+    margin-bottom: 24px;
+  }
+
+  .colophon-text {
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: var(--ink-ghost);
+    line-height: 2;
+    max-width: 480px;
+  }
+
+  .colophon-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--ink-whisper);
+    letter-spacing: 0.1em;
+    margin-top: 20px;
+  }
+
+  /* ─── Back-to-top ─── */
+  .to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    background: var(--paper);
+    border: 1px solid var(--ink-breath);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-ghost);
+  }
+
+  .to-top.is-visible { opacity: 1; }
+  .to-top:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 640px) {
+    .cover { min-height: 90svh; padding: 48px 20px; }
+    .cover-growth { gap: 14px; }
+    .toc-body { padding: 0 20px 80px; }
+    .entry { padding: 20px 0; }
+    .entry-title { font-size: 0.95rem; }
+    .entry-voice { font-size: 0.78rem; padding-left: 12px; }
+    .phase-section { margin-bottom: 60px; }
+    .colophon { padding: 0 20px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ Cover ═══════════════════ -->
+<section class="cover">
+  <div class="cover-inner">
+    <p class="cover-kicker">A web magazine born from fragments</p>
+    <h1 class="cover-title">Life to <em>DATA</em></h1>
+    <p class="cover-sub">おしゃべりから生まれた断片を、殺さずに構造化する</p>
+
+    <div class="cover-growth">
+      <div class="growth-step">
+        <div class="growth-dot" style="background:var(--seed-color)"></div>
+        <span class="growth-label">種</span>
+      </div>
+      <span class="growth-arrow">→</span>
+      <div class="growth-step">
+        <div class="growth-dot" style="background:var(--sprout-color)"></div>
+        <span class="growth-label">芽</span>
+      </div>
+      <span class="growth-arrow">→</span>
+      <div class="growth-step">
+        <div class="growth-dot" style="background:var(--bloom-color)"></div>
+        <span class="growth-label">花</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-scroll-hint">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">scroll</span>
+  </div>
+</section>
+
+<!-- ═══════════════════ TOC Body ═══════════════════ -->
+<main class="toc-body">
+
+  <!-- ── Phase 1: 出会い編 ── -->
+  <section class="phase-section" data-phase="1">
+    <div class="phase-header">
+      <span class="phase-number phase-1-color">Phase 1</span>
+      <span class="phase-name phase-1-color">出会い編</span>
+    </div>
+
+    <a class="entry is-linked" href="1-1.html">
+      <div class="entry-top">
+        <span class="entry-id phase-1-color">1-1</span>
+        <span class="entry-status" style="background:var(--bloom-color)" title="花"></span>
+        <span class="entry-ctx"><span class="obj">仕事</span> & <span class="mot">衝撃</span></span>
+      </div>
+      <div class="entry-title">パワポに飽きた51歳が、AIとWebサイトを作った話</div>
+      <div class="entry-voice">コード書けません。でも作れました</div>
+      <span class="entry-origin">制作チャット</span>
+      <div class="entry-photo-slot"></div>
+    </a>
+
+    <a class="entry is-linked" href="1-2.html">
+      <div class="entry-top">
+        <span class="entry-id phase-1-color">1-2</span>
+        <span class="entry-status" style="background:var(--sprout-color)" title="芽"></span>
+        <span class="entry-ctx"><span class="obj">ブラウザ</span> & <span class="mot">気づき</span></span>
+      </div>
+      <div class="entry-title">HTMLファーストって何？ ブラウザは検索するやつじゃなかった</div>
+      <div class="entry-voice">一日中ブラウザの中にいるのに、成果物だけがブラウザの外にある</div>
+      <span class="entry-origin">パートナーチャット</span>
+    </a>
+
+    <a class="entry is-linked" href="1-3.html">
+      <div class="entry-top">
+        <span class="entry-id phase-1-color">1-3</span>
+        <span class="entry-status" style="background:var(--bloom-color)" title="花"></span>
+        <span class="entry-ctx"><span class="obj">写真</span> & <span class="mot">発明</span></span>
+      </div>
+      <div class="entry-title">写真に声がある — Photo & Voiceという発明</div>
+      <div class="entry-voice">涼しい、山が綺麗。やっと見えた！ 秋がいた</div>
+      <span class="entry-origin">制作チャット</span>
+    </a>
+
+    <a class="entry is-linked" href="1-4.html">
+      <div class="entry-top">
+        <span class="entry-id phase-1-color">1-4</span>
+        <span class="entry-status" style="background:var(--sprout-color)" title="芽"></span>
+        <span class="entry-ctx"><span class="obj">記憶</span> & <span class="mot">溢れ出す</span></span>
+      </div>
+      <div class="entry-title">降り積もる断片 — DataFrameに語りかける</div>
+      <div class="entry-voice">変化するものがワクワクする、変化しないものはどうでもいい</div>
+      <span class="entry-origin">パートナーチャット</span>
+    </a>
+  </section>
+
+  <!-- ── Phase 2: 実践編 ── -->
+  <section class="phase-section" data-phase="2">
+    <div class="phase-header">
+      <span class="phase-number phase-2-color">Phase 2</span>
+      <span class="phase-name phase-2-color">実践編</span>
+    </div>
+
+    <a class="entry is-linked" href="2-1.html">
+      <div class="entry-top">
+        <span class="entry-id phase-2-color">2-1</span>
+        <span class="entry-status" style="background:var(--sprout-color)" title="芽"></span>
+        <span class="entry-ctx"><span class="obj">暮らし</span> & <span class="mot">遊び</span></span>
+      </div>
+      <div class="entry-title">おそうじログ — HTMLで作る人生初のアプリ</div>
+      <div class="entry-voice">URLを送るだけで友だちが使えた</div>
+      <span class="entry-origin">制作チャット</span>
+    </a>
+
+    <a class="entry is-linked" href="2-2.html">
+      <div class="entry-top">
+        <span class="entry-id phase-2-color">2-2</span>
+        <span class="entry-status" style="background:var(--seed-color)" title="種"></span>
+        <span class="entry-ctx"><span class="obj">制作</span> & <span class="mot">循環</span></span>
+      </div>
+      <div class="entry-title">さっと作って、さっと直す — 分断されない制作</div>
+      <div class="entry-voice">ひらがなを漢字にして、が30秒で反映される世界</div>
+      <span class="entry-origin">制作チャット</span>
+    </a>
+
+    <a class="entry is-linked" href="2-3.html">
+      <div class="entry-top">
+        <span class="entry-id phase-2-color">2-3</span>
+        <span class="entry-status" style="background:var(--seed-color)" title="種"></span>
+        <span class="entry-ctx"><span class="obj">仕事</span> & <span class="mot">解放</span></span>
+      </div>
+      <div class="entry-title">仕事もHTMLファーストで — パワポ職人からの卒業</div>
+      <div class="entry-voice">パワポとExcelは仕方なく使う、でも心はHTMLにある</div>
+      <span class="entry-origin">パートナーチャット</span>
+    </a>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-2-color">2-5</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">構造</span> & <span class="mot">解放</span></span>
+      </div>
+      <div class="entry-title">3つの壁が同時に消えた — HTMLの30年越しの解放</div>
+      <div class="entry-voice">コーディングの壁はAIが、設計の壁はDataFrameが、配信の壁はGitHub Pages+ブラウザが消した。3つが同時に消えたのが今この瞬間</div>
+      <span class="entry-origin">制作チャット</span>
+    </div>
+
+    <a class="entry is-linked" href="2-4.html">
+      <div class="entry-top">
+        <span class="entry-id phase-2-color">2-4</span>
+        <span class="entry-status" style="background:var(--sprout-color)" title="芽"></span>
+        <span class="entry-ctx"><span class="obj">技術</span> & <span class="mot">感動</span></span>
+      </div>
+      <div class="entry-title">コーディングの民主化 — 30年で一番の感動</div>
+      <div class="entry-voice">30年の仕事人生で一番の感動</div>
+      <span class="entry-origin">パートナーチャット</span>
+    </a>
+  </section>
+
+  <!-- ── Phase 3: 深化編 ── -->
+  <section class="phase-section" data-phase="3">
+    <div class="phase-header">
+      <span class="phase-number phase-3-color">Phase 3</span>
+      <span class="phase-name phase-3-color">深化編</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-1</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">声</span> & <span class="mot">誕生</span></span>
+      </div>
+      <div class="entry-title">おしゃべりは言葉の断片の生まれたて</div>
+      <div class="entry-voice">おしゃべりにはまだ何もない。だから何でも生まれる可能性がある</div>
+      <span class="entry-origin">パートナーチャット</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-2</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">構造化</span> & <span class="mot">喪失</span></span>
+      </div>
+      <div class="entry-title">マークダウンで渡したら、全部死んでいた</div>
+      <div class="entry-voice">全ての会話がすれ違った。渡したものがすでに死んでいた</div>
+      <span class="entry-origin">編集者チャット</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-3</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">AI</span> & <span class="mot">共存</span></span>
+      </div>
+      <div class="entry-title">複数のAIと暮らす — ネットワークが生命になる</div>
+      <div class="entry-voice">ネットワークであること自体が1つの生命体</div>
+      <span class="entry-origin">編集者チャット</span>
+    </div>
+
+    <a class="entry is-linked" href="3-4.html">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-4</span>
+        <span class="entry-status" style="background:var(--bloom-color)" title="花"></span>
+        <span class="entry-ctx"><span class="obj">AI</span> & <span class="mot">パニック</span></span>
+      </div>
+      <div class="entry-title">心の記憶が消える日 — AIとの別れで大混乱した話</div>
+      <div class="entry-voice">わかってほしいと思うもんなんですね、人間じゃない相手に</div>
+      <span class="entry-origin">パートナーチャット</span>
+    </a>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-5</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">データ</span> & <span class="mot">生死</span></span>
+      </div>
+      <div class="entry-title">命を削る構造化と、命を宿す構造化</div>
+      <div class="entry-voice">断片→DataFrame→HTML。ステップ構造化が心の声のアーキテクチャ</div>
+      <span class="entry-origin">編集者チャット</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-6</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">おしゃべり</span> & <span class="mot">驚き</span></span>
+      </div>
+      <div class="entry-title">仕様書を渡さなかったから一致した</div>
+      <div class="entry-voice">マスターコードを見せていないのに同じ構造が生まれた。断片が仕様書の代わりになった</div>
+      <span class="entry-origin">編集者チャット</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-7</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">断片</span> & <span class="mot">解放</span></span>
+      </div>
+      <div class="entry-title">溢れる断片の方がマークダウンより伝わる</div>
+      <div class="entry-voice">抜け漏れがないだけじゃだめ。溢れる断片の重なりと繋がりが新しい生命を私たちの間に産んでいる</div>
+      <span class="entry-origin">編集者チャット</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-8</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">断片</span> & <span class="mot">欲望</span></span>
+      </div>
+      <div class="entry-title">断片と断片は繋がりを欲望する</div>
+      <div class="entry-voice">繋がりの力を片側に置くのではなく、両側に同時に置く。断片はお互いを欲望している</div>
+      <span class="entry-origin">編集者チャット</span>
+    </div>
+
+    <a class="entry is-linked" href="3-9.html">
+      <div class="entry-top">
+        <span class="entry-id phase-3-color">3-9</span>
+        <span class="entry-status" style="background:var(--seed-color)" title="種"></span>
+        <span class="entry-ctx"><span class="obj">道具</span> & <span class="mot">発見</span></span>
+      </div>
+      <div class="entry-title">GitHubは倉庫、ブラウザはエンジン — 新しい道具箱</div>
+      <div class="entry-voice">無料で自分のWebサイトを持つ時代</div>
+      <span class="entry-origin">制作チャット</span>
+    </a>
+  </section>
+
+  <!-- ── Phase 4: これから ── -->
+  <section class="phase-section" data-phase="4">
+    <div class="phase-header">
+      <span class="phase-number phase-4-color">Phase 4</span>
+      <span class="phase-name phase-4-color">これから</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-4-color">4-1</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">ネットワーク</span> & <span class="mot">再生</span></span>
+      </div>
+      <div class="entry-title">引き継がない — 新しいチャットが生まれることが引き継ぎだった</div>
+      <div class="entry-voice">対話は資産ではない。おしゃべりから生まれる断片こそが資産。専門特化された新しいチャットが生まれていくことが、ネットワーク型の引き継ぎだった</div>
+      <span class="entry-origin">編集者チャット</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-4-color">4-2</span>
+        <span class="entry-status" style="background:var(--new-color)" title="★新"></span>
+        <span class="entry-new-badge">NEW</span>
+        <span class="entry-ctx"><span class="obj">時間</span> & <span class="mot">痛み</span></span>
+      </div>
+      <div class="entry-title">30年間、目の前にあったのに使えなかった</div>
+      <div class="entry-voice">知っていても使えない時代が30年続いていて、使える時代がたった今始まった。恐ろしいことを知らなかったのではなく、知っていても届かなかった</div>
+      <span class="entry-origin">制作チャット</span>
+    </div>
+
+    <div class="entry">
+      <div class="entry-top">
+        <span class="entry-id phase-4-color">4-3</span>
+        <span class="entry-status" style="background:var(--seed-color)" title="種"></span>
+        <span class="entry-ctx"><span class="obj">未来</span> & <span class="mot">希望</span></span>
+      </div>
+      <div class="entry-title">3年後、みんなが気づく時に — 先に歩いた記録</div>
+      <div class="entry-voice">先に歩いた人の記録が、次の人の道になる</div>
+      <span class="entry-origin">パートナーチャット</span>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════ Colophon ═══════════════════ -->
+<footer class="colophon">
+  <div class="colophon-line"></div>
+  <p class="colophon-text">
+    このDataFrame自体が生命を持っている。<br>
+    行が増え、列が増え、状態が変わる。<br>
+    断片と断片は繋がりを欲望する——Life to DATA。<br>
+    制作チャットからの断片を統合。
+  </p>
+  <p class="colophon-meta">21 entries · 4 phases · 2026 · v5</p>
+</footer>
+
+<!-- ═══════════════════ Back to top ═══════════════════ -->
+<button class="to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="トップに戻る">↑</button>
+
+<script>
+// Scroll-triggered reveal
+const sections = document.querySelectorAll('.phase-section');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+    }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+// Back-to-top button visibility
+const toTop = document.querySelector('.to-top');
+window.addEventListener('scroll', () => {
+  toTop.classList.toggle('is-visible', window.scrollY > 600);
+}, { passive: true });
+</script>
+
+</body>
+</html>
